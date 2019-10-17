@@ -1,0 +1,20 @@
+diff --git a/crypto/ppccap.c b/crypto/ppccap.c
+index afb9e31..fbf4e0d 100644
+--- a/crypto/ppccap.c
++++ b/crypto/ppccap.c
+@@ -276,15 +276,6 @@ void OPENSSL_cpuid_setup(void)
+             OPENSSL_ppccap_P |= PPC_FPU64;
+     }
+ 
+-    if (__power_set(0xffffffffU<<14))           /* POWER6 and later */
+-        OPENSSL_ppccap_P |= PPC_ALTIVEC;
+-
+-    if (__power_set(0xffffffffU<<16))           /* POWER8 and later */
+-        OPENSSL_ppccap_P |= PPC_CRYPTO207;
+-
+-    if (__power_set(0xffffffffU<<17))           /* POWER9 and later */
+-        OPENSSL_ppccap_P |= PPC_MADD300;
+-
+     return;
+ # endif
+ #endif

@@ -1,0 +1,36 @@
+diff --git b/Configurations/50-ibmi.conf b/Configurations/50-ibmi.conf
+new file mode 100644
+index 0000000..c9e03c8
+--- /dev/null
++++ b/Configurations/50-ibmi.conf
+@@ -0,0 +1,30 @@
++my %targets = (
++    #### IBM i.
++    "pase-gcc" => {
++        inherit_from     => [ "aix-gcc" ],
++        sys_id           => "OS400",
++        shared_ldflag    => "-shared -Wl,-G",
++        shared_target    => "pase-shared",
++    },
++    "pase64-gcc" => {
++        inherit_from     => [ "aix64-gcc" ],
++        sys_id           => "OS400",
++        shared_ldflag    => "-shared -Wl,-G",
++        shared_target    => "pase-shared",
++        shared_extension => ".so.\$(SHLIB_VERSION_NUMBER)",
++        shared_extension_simple => shared(".so"),
++    },
++    "pase-cc" => {
++        inherit_from     => [ "aix-cc" ],
++        sys_id           => "OS400",
++        lflags           => "",
++        cflags           => add("-D__PASE__ -D_LARGE_FILES -qalign=natural -qldbl128"),
++        shared_ldflag    => add("-bnoentry"),
++        shared_target    => "pase-shared",
++    },
++    "pase64-cc" => {
++        inherit_from     => [ "aix64-gcc" ],
++        sys_id           => "OS400",
++        shared_target    => "pase-shared",
++    },
++);

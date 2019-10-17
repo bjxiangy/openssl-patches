@@ -1,0 +1,147 @@
+diff -r -u a/crypto/ui/ui_pase.c b/crypto/ui/ui_pase.c
+--- a/crypto/ui/ui_pase.c	2019-01-11 15:20:00.000000000 +0800
++++ b/crypto/ui/ui_pase.c	2019-01-11 15:19:32.000000000 +0800
+@@ -0,0 +1,143 @@
++/*
++ * Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
++ *
++ * Licensed under the OpenSSL license (the "License").  You may not use
++ * this file except in compliance with the License.  You can obtain a copy
++ * in the file LICENSE in the source distribution or at
++ * https://www.openssl.org/source/license.html
++ */
++#include "e_os.h"
++
++#include <stdlib.h>
++#include <stdio.h>
++#include <errno.h>
++#include <malloc.h>
++#include <signal.h>
++#include <sys/types.h>
++#include <as400_types.h>
++#include <as400_protos.h>
++
++#if defined(OPENSSL_SYS_PASE)
++
++/* Macros for handling 16-byte alignment of MI pointers */
++#define QUADWORD_ALIGNED_VAR_DECLARE(type, name) \
++type* name; \
++char name##_buf[sizeof(type) + 15]
++
++#define QUADWORD_ALIGNED_VAR_INIT(type, name) \
++name = (type*) (((intptr_t) name##_buf + 0xf) & ~0xf)
++
++#define QUADWORD_ALIGNED_VAR(type, name) \
++QUADWORD_ALIGNED_VAR_DECLARE(type, name); \
++QUADWORD_ALIGNED_VAR_INIT(type, name)
++
++QUADWORD_ALIGNED_VAR_DECLARE(ILEpointer, Qp0zSetTerminalMode_ptr);
++QUADWORD_ALIGNED_VAR_DECLARE(ILEpointer, Qp0zIsATerminal_ptr);
++
++/*
++ * init_ile loads an ILE service program and extracts an
++ * ILE pointer to a procedure that is exported by that
++ * service program.
++ */
++static int init_ile()
++{
++    /* If we haven't forked or have already re-initialized
++     * we're good still
++     */
++    static pid_t init_pid = -1;
++    
++    if (getpid() == init_pid) {
++        return 1;
++    }
++    
++    unsigned long long actmark = _ILELOADX("QSYS/QP0ZTRMLC", ILELOAD_LIBOBJ);
++    if (actmark == -1) {
++        return 0;
++    }
++    
++    QUADWORD_ALIGNED_VAR_INIT(ILEpointer, Qp0zSetTerminalMode_ptr);
++    if (_ILESYMX(Qp0zSetTerminalMode_ptr, actmark, "Qp0zSetTerminalMode") == -1) {
++        return 0;
++    }
++    
++    QUADWORD_ALIGNED_VAR_INIT(ILEpointer, Qp0zIsATerminal_ptr);
++    if (_ILESYMX(Qp0zIsATerminal_ptr, actmark, "Qp0zIsATerminal") == -1) {
++        return 0;
++    }
++    
++    /* If we initialized fully, save the pid that we
++     * initialized in
++     */
++    init_pid = getpid();
++    return 1;
++}
++
++int Qp0zSetTerminalMode(unsigned char mode, unsigned char type)
++{
++    static return_type = RESULT_INT32;
++    static arg_type_t signature[] =
++    {
++        ARG_UINT8,      /* requires #pragma nowiden in ILE code */
++        ARG_UINT8,      /* requires #pragma nowiden in ILE code */
++        ARG_MEMPTR,
++        ARG_END
++    };
++    
++    typedef struct {
++        ILEarglist_base base;
++        unsigned char mode;
++        unsigned char type;
++        ILEpointer reserved;
++    } arglist_t;
++    
++    QUADWORD_ALIGNED_VAR(arglist_t, arglist);
++    
++    arglist->mode = mode;
++    arglist->type = type;
++    arglist->reserved.s.addr = (address64_t) NULL;
++    
++    int rc = -1;
++    if(init_ile()) {
++        rc = _ILECALL(Qp0zSetTerminalMode_ptr,
++                      &arglist->base,
++                      signature,
++                      return_type);
++     
++        rc = rc ? -1 : arglist->base.result.s_int32.r_int32;
++    }
++    
++    return rc;
++}
++
++int Qp0zIsATerminal(int fd)
++{
++    static return_type = RESULT_INT32;
++    static arg_type_t signature[] =
++    {
++        ARG_INT32,
++        ARG_END
++    };
++    
++    typedef struct {
++        ILEarglist_base base;
++        int32 fd;
++    } arglist_t;
++    
++    QUADWORD_ALIGNED_VAR(arglist_t, arglist);
++    
++    arglist->fd = fd;
++    
++    int rc = -1;
++    if(init_ile()) {
++        rc = _ILECALL(Qp0zIsATerminal_ptr,
++                      &arglist->base,
++                      signature,
++                      return_type);
++        
++        rc = rc ? -1 : arglist->base.result.s_int32.r_int32;
++    }
++    
++    return rc;
++}
++
++#endif                          /* OPENSSL_SYS_PASE */

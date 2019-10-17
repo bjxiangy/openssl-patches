@@ -1,0 +1,8 @@
+diff -r -u a/crypto/ui/build.info b/crypto/ui/build.info
+--- a/crypto/ui/build.info	2019-01-11 11:27:16.000000000 +0800
++++ b/crypto/ui/build.info	2019-01-11 13:27:21.000000000 +0800
+@@ -1,3 +1,3 @@
+ LIBS=../../libcrypto
+ SOURCE[../../libcrypto]=\
+-        ui_err.c ui_lib.c ui_openssl.c ui_null.c ui_util.c
++        ui_err.c ui_lib.c ui_openssl.c ui_null.c ui_util.c ui_pase.c

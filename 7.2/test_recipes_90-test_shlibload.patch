@@ -1,0 +1,13 @@
+diff --git a/test/recipes/90-test_shlibload.t b/test/recipes/90-test_shlibload.t
+index 8372a61..13fa4cc 100644
+--- a/test/recipes/90-test_shlibload.t
++++ b/test/recipes/90-test_shlibload.t
+@@ -19,7 +19,7 @@ use lib bldtop_dir('.');
+ use configdata;
+ 
+ plan skip_all => "Test only supported in a shared build" if disabled("shared");
+-plan skip_all => "Test is disabled on AIX" if config('target') =~ m|^aix|;
++plan skip_all => "Test is disabled on AIX" if config('target') =~ m/^(aix|pase)/;
+ plan skip_all => "Test is disabled on VMS" if config('target') =~ m|^vms|;
+ plan skip_all => "Test only supported in a dso build" if disabled("dso");
+ 
